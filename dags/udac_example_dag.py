@@ -10,8 +10,12 @@ from helpers import SqlQueries
 # AWS_SECRET = os.environ.get('AWS_SECRET')
 
 default_args = {
-    'owner': 'udacity',
+    'owner': 'Mihlos',
     'start_date': datetime(2019, 1, 12),
+    'depends_on_past': False,
+#     'retires': 1,
+    'retry_delay': ,
+    'catchup': False 
 }
 
 dag = DAG('udac_example_dag',
