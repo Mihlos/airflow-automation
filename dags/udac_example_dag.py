@@ -31,7 +31,7 @@ start_operator = DummyOperator(task_id='Begin_execution',
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
     dag=dag,
-    conn_id='aws_credentials'
+    conn_id='aws_credentials',
     redshift_conn_id='redshift',
     table='staging_events',
     sql= """
@@ -53,7 +53,7 @@ stage_events_to_redshift = StageToRedshiftOperator(
 stage_songs_to_redshift = StageToRedshiftOperator(
     task_id='Stage_songs',
     dag=dag,
-    conn_id='aws_credentials'
+    conn_id='aws_credentials',
     redshift_conn_id='redshift',
     table='staging_songs',
     sql_create= """
