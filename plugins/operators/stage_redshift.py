@@ -5,14 +5,13 @@ from airflow.utils.decorators import apply_defaults
 
 class StageToRedshiftOperator(BaseOperator):
     ui_color = '#358140'
-    
     copy_sql = """
         COPY {}
         FROM '{}'
         ACCESS_KEY_ID '{}'
         SECRET_ACCESS_KEY '{}'
-        IGNOREHEADER {}
-        DELIMITER '{}'
+        FORMAT AS json 'auto' 
+        REGION 'us-west-2';
     """
 
     @apply_defaults
@@ -32,19 +31,24 @@ class StageToRedshiftOperator(BaseOperator):
         self.conn_id = conn_id
         self.table = table
         self.sql = sql
+        self.s3_bucket=s3_bucket,
+        self.s3_key=s3_key,
 
     def execute(self, context):
-        redshift = PostgresHook(postgres_conn_id=self.redsifht_conn_id)
+        redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
         redshift.run(f'DROP TABLE IF EXISTS {self.table};')
-        sql = self.sql
-        redshift.run(sql)
-        
+        redshift.run(self.sql)
+
+        self.log.info("Copying data from S3 to Redshift")
         aws_hook = AwsHook(self.conn_id)
         credentials = aws_hook.get_credentials()
-        
-        self.log.info('StageToRedshiftOperator not implemented yet')
+        s3_path = "s3://{}/{}".format(self.s3_bucket, self.s3_key)
+        format_sql = StageToRedshiftOperator.copy_sql.format(
+            self.table,
+            s3_path,
+            self.credentials.access_key,
+            self.credentials.secret_key,
+        )
+        redshift.run(format_sql)
 
-
-
-
-
+        self.log.info('StageToRedshiftOperator tables copied.')
