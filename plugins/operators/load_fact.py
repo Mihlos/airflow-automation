@@ -28,6 +28,6 @@ class LoadFactOperator(BaseOperator):
         CREATE TABLE {self.table} AS
         {self.sql}
         '''
-
+        
         redshift.run(format_sql)
-        self.log.info('LoadFactOperator implementing')
+        self.log.info('LoadFactOperator done')

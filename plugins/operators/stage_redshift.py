@@ -31,8 +31,8 @@ class StageToRedshiftOperator(BaseOperator):
         self.aws_conn_id = aws_conn_id
         self.table = table
         self.sql = sql
-        self.s3_bucket=s3_bucket,
-        self.s3_key=s3_key,
+        self.s3_bucket=s3_bucket
+        self.s3_key=s3_key
 
     def execute(self, context):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
@@ -44,7 +44,7 @@ class StageToRedshiftOperator(BaseOperator):
         aws_hook = AwsHook(self.aws_conn_id)
         credentials = aws_hook.get_credentials()
         
-        s3_path = "s3://{}/{}".format(self.s3_bucket[0], self.s3_key[0])
+        s3_path = "s3://{}/{}".format(self.s3_bucket, self.s3_key)
         format_sql = StageToRedshiftOperator.copy_sql.format(
             self.table,
             s3_path,
