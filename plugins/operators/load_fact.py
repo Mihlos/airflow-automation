@@ -10,8 +10,8 @@ class LoadFactOperator(BaseOperator):
     def __init__(self,
                  conn_id="",
                  sql ="",
-                 redshift_conn_id=""
-                 table=""
+                 redshift_conn_id="",
+                 table="",
                  *args, **kwargs):
 
         super(LoadFactOperator, self).__init__(*args, **kwargs)
