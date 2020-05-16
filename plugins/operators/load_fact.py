@@ -31,6 +31,5 @@ class LoadFactOperator(BaseOperator):
                 self.log.info("Delete {} table".format(self.table))
                 redshift.run("DELETE FROM {}".format(self.table))
         
-        format_sql = self.sql_insert
-        redshift.run(format_sql)
+        redshift.run(self.sql_insert)
         self.log.info('LoadFactOperator done')

@@ -118,7 +118,7 @@ class SqlQueries:
            events.location     AS location,
            events.userAgent    AS user_agent
         FROM staging_events AS events
-        JOIN staging_songs AS songs
+        LEFT JOIN staging_songs AS songs
             ON  (events.artist = songs.artist_name)
             AND (events.song = songs.title)
             AND (events.length = songs.duration)

@@ -25,6 +25,7 @@ class StageToRedshiftOperator(BaseOperator):
                  s3_bucket="",
                  s3_key="",
                  formated='auto',
+                 append_only=False,
                  *args, **kwargs):
 
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
@@ -33,14 +34,19 @@ class StageToRedshiftOperator(BaseOperator):
         self.aws_conn_id = aws_conn_id
         self.table = table
         self.sql = sql
-        self.s3_bucket=s3_bucket
-        self.s3_key=s3_key
+        self.s3_bucket = s3_bucket
+        self.s3_key = s3_key
+        self.append_only = append_only
         self.formated=formated
 
     def execute(self, context):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 #         redshift.run(f'DROP TABLE IF EXISTS {self.table};')
         redshift.run(self.sql)
+    
+        if self.append_only is False:
+            self.log.info("Delete {} table".format(self.table))
+            redshift.run("DELETE FROM {}".format(self.table))
 
         self.log.info("Copying data from S3 to Redshift")
         
