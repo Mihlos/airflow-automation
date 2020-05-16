@@ -8,28 +8,29 @@ class LoadFactOperator(BaseOperator):
 
     @apply_defaults
     def __init__(self,
-                 conn_id="",
                  sql_create ="",
                  sql_insert ="",
                  redshift_conn_id="",
                  table="",
+                 append_only = False,
                  *args, **kwargs):
 
         super(LoadFactOperator, self).__init__(*args, **kwargs)
-        self.conn_id = conn_id
         self.sql_create = sql_create
         self.sql_insert = sql_insert
         self.redshift_conn_id = redshift_conn_id
         self.table = table
+        self.append_only = append_only
 
     def execute(self, context):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
+#         redshift.run(f'DROP TABLE IF EXISTS {self.table};')
+        redshift.run(self.sql_create)
         
-        redshift.run(f'DROP TABLE IF EXISTS {self.table};')
-#         redshift.run(self.sql_create)
-        format_sql = f'''
-        CREATE TABLE {self.table} AS {self.sql_insert}
-        '''
+        if self.append_only is False:
+                self.log.info("Delete {} table".format(self.table))
+                redshift.run("DELETE FROM {}".format(self.table))
         
+        format_sql = self.sql_insert
         redshift.run(format_sql)
         self.log.info('LoadFactOperator done')
