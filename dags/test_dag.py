@@ -11,8 +11,10 @@ from helpers import SqlQueries
 
 default_args = {
     'owner': 'Mihlos',
-    'start_date': datetime(2020, 5, 14),
+    'start_date': datetime(2018, 11, 10),
+    'end_date': datetime(2018, 11, 15),
     'depends_on_past': False,
+    'max_active_runs':1,
     'retries': 1, # 3
     'retry_delay': timedelta(minutes=1), # 5
     'catchup': False,
@@ -22,7 +24,7 @@ default_args = {
 dag = DAG('test_dag',
           default_args=default_args,
           description='Load and transform data in Redshift with Airflow',
-          schedule_interval='@daily'
+          schedule_interval='@daily' # '0 * * * *'
         )
 
 start_operator = DummyOperator(task_id='Begin_execution',  
@@ -35,7 +37,7 @@ stage_events_to_redshift = StageToRedshiftOperator(
     redshift_conn_id='redshift',
     table='staging_events',
     sql= """
-    CREATE TABLE public.staging_events (
+    CREATE TABLE IF NOT EXISTS public.staging_events (
 	artist varchar(256),
 	auth varchar(256),
 	firstname varchar(256),
@@ -57,7 +59,8 @@ stage_events_to_redshift = StageToRedshiftOperator(
     );
     """,
     s3_bucket='udacity-dend',
-    s3_key='log_data/'
+    s3_key='log_data/{execution_date.year}/{execution_date.month}/{execution_date.year}-{execution_date.month}-{execution_date.day}-events.json',
+    formated='s3://udacity-dend/log_json_path.json'
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
@@ -67,7 +70,7 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     redshift_conn_id='redshift',
     table='staging_songs',
     sql= """
-    CREATE TABLE public.staging_songs (
+    CREATE TABLE IF NOT EXISTS public.staging_songs (
 	num_songs int4,
 	artist_id varchar(256),
 	artist_name varchar(256),
@@ -89,7 +92,7 @@ load_songplays_table = LoadFactOperator(
     dag=dag,
     redshift_conn_id='redshift',
     table='songplays',
-    sql_create='''CREATE TABLE public.songplays (
+    sql_create='''CREATE TABLE IF NOT EXISTS public.songplays (
 	playid varchar(32) NOT NULL,
 	start_time timestamp NOT NULL,
 	userid int4 NOT NULL,
@@ -104,74 +107,74 @@ load_songplays_table = LoadFactOperator(
     sql_insert=SqlQueries.songplay_table_insert
 )
 
-load_user_dimension_table = LoadDimensionOperator(
-    task_id='Load_user_dim_table',
-    dag=dag,
-    redshift_conn_id='redshift',
-    table='users',
-    sql_create='''CREATE TABLE public.users (
-	userid int4 NOT NULL,
-	first_name varchar(256),
-	last_name varchar(256),
-	gender varchar(256),
-	"level" varchar(256),
-	CONSTRAINT users_pkey PRIMARY KEY (userid)
-    );
-    ''',
-    sql_insert=SqlQueries.user_table_insert
-)
+# load_user_dimension_table = LoadDimensionOperator(
+#     task_id='Load_user_dim_table',
+#     dag=dag,
+#     redshift_conn_id='redshift',
+#     table='users',
+#     sql_create='''CREATE TABLE public.users (
+# 	userid int4 NOT NULL,
+# 	first_name varchar(256),
+# 	last_name varchar(256),
+# 	gender varchar(256),
+# 	"level" varchar(256),
+# 	CONSTRAINT users_pkey PRIMARY KEY (userid)
+#     );
+#     ''',
+#     sql_insert=SqlQueries.user_table_insert
+# )
 
-load_song_dimension_table = LoadDimensionOperator(
-    task_id='Load_song_dim_table',
-    dag=dag,
-    redshift_conn_id='redshift',
-    table='songs',
-    sql_create='''CREATE TABLE public.songs (
-	songid varchar(256) NOT NULL,
-	title varchar(256),
-	artistid varchar(256),
-	"year" int4,
-	duration numeric(18,0),
-	CONSTRAINT songs_pkey PRIMARY KEY (songid)
-    );
-    ''',
-    sql_insert=SqlQueries.song_table_insert
-)
+# load_song_dimension_table = LoadDimensionOperator(
+#     task_id='Load_song_dim_table',
+#     dag=dag,
+#     redshift_conn_id='redshift',
+#     table='songs',
+#     sql_create='''CREATE TABLE public.songs (
+# 	songid varchar(256) NOT NULL,
+# 	title varchar(256),
+# 	artistid varchar(256),
+# 	"year" int4,
+# 	duration numeric(18,0),
+# 	CONSTRAINT songs_pkey PRIMARY KEY (songid)
+#     );
+#     ''',
+#     sql_insert=SqlQueries.song_table_insert
+# )
 
-load_artist_dimension_table = LoadDimensionOperator(
-    task_id='Load_artist_dim_table',
-    dag=dag,
-    redshift_conn_id='redshift',
-    table='artists',
-    sql_create='''CREATE TABLE public.artists (
-	artistid varchar(256) NOT NULL,
-	name varchar(256),
-	location varchar(256),
-	lattitude numeric(18,0),
-	longitude numeric(18,0)
-    );
-    ''',
-    sql_insert=SqlQueries.artist_table_insert
-)
+# load_artist_dimension_table = LoadDimensionOperator(
+#     task_id='Load_artist_dim_table',
+#     dag=dag,
+#     redshift_conn_id='redshift',
+#     table='artists',
+#     sql_create='''CREATE TABLE public.artists (
+# 	artistid varchar(256) NOT NULL,
+# 	name varchar(256),
+# 	location varchar(256),
+# 	lattitude numeric(18,0),
+# 	longitude numeric(18,0)
+#     );
+#     ''',
+#     sql_insert=SqlQueries.artist_table_insert
+# )
 
-load_time_dimension_table = LoadDimensionOperator(
-    task_id='Load_time_dim_table',
-    dag=dag,
-    redshift_conn_id='redshift',
-    table='time',
-    sql_create='''CREATE TABLE public.time (
-    start_time timestamp NOT NULL,
-    hour int4 NOT NULL,
-    day int4 NOT NULL,
-    week int4 NOT NULL,
-    month int4 NOT NULL,
-    year int4 NOT NULL,
-    weekday int4 NOT NULL,
-    CONSTRAINT time_pkey PRIMARY KEY (start_time)
-    );
-    ''',
-    sql_insert=SqlQueries.time_table_insert
-)
+# load_time_dimension_table = LoadDimensionOperator(
+#     task_id='Load_time_dim_table',
+#     dag=dag,
+#     redshift_conn_id='redshift',
+#     table='time',
+#     sql_create='''CREATE TABLE public.time (
+#     start_time timestamp NOT NULL,
+#     hour int4 NOT NULL,
+#     day int4 NOT NULL,
+#     week int4 NOT NULL,
+#     month int4 NOT NULL,
+#     year int4 NOT NULL,
+#     weekday int4 NOT NULL,
+#     CONSTRAINT time_pkey PRIMARY KEY (start_time)
+#     );
+#     ''',
+#     sql_insert=SqlQueries.time_table_insert
+# )
 
 
 # Execution flow
@@ -182,7 +185,7 @@ start_operator >> stage_songs_to_redshift
 stage_events_to_redshift >> load_songplays_table
 stage_songs_to_redshift >> load_songplays_table
 # Load dimensionals
-load_songplays_table >> load_song_dimension_table 
-load_songplays_table >> load_user_dimension_table 
-load_songplays_table >> load_artist_dimension_table 
-load_songplays_table >> load_time_dimension_table
+# load_songplays_table >> load_song_dimension_table 
+# load_songplays_table >> load_user_dimension_table 
+# load_songplays_table >> load_artist_dimension_table 
+# load_songplays_table >> load_time_dimension_table
