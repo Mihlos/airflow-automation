@@ -14,17 +14,17 @@ default_args = {
     'start_date': datetime(2018, 11, 10),
     'end_date': datetime(2018, 11, 15),
     'depends_on_past': False,
-    'retries': 1, # 3
-    'retry_delay': timedelta(minutes=1), # 5
+    'retries': 3,
+    'retry_delay': timedelta(minutes=5),
     'catchup': False,
     'email_on_failure':False
 }
 
-dag = DAG('test_dag',
+dag = DAG('data_dag',
           default_args=default_args,
           max_active_runs=1,
-          description='Load and transform data in Redshift with Airflow',
-          schedule_interval='@daily' # '0 * * * *'
+          description='Load from S3 and transform data in Redshift with Airflow',
+          schedule_interval='0 * * * *'
         )
 
 start_operator = DummyOperator(task_id='Begin_execution',  
